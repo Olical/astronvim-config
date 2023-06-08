@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
 # TODO Also delete the existing Lua files first.
-echo "Compiling .fnl files to .lua"
 find . -type f -name '*.fnl' | parallel --bar -j 8 fennel --compile '{}' '>' '{.}.lua'

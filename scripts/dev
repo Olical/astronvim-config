@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+echo "Compiling when .fnl files change (or when you press space)"
+find . -type f -name '*.fnl' | entr ./scripts/compile

@@ -13,4 +13,4 @@
        :relativenumber false
        :spell true
        :wrap true
-       :guifont "Fira Code Nerd Font:h10"}}
+       :guifont "FiraCode Nerd Font:h10"}}

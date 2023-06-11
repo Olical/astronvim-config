@@ -1,12 +1,11 @@
 #!/usr/bin/env bb
 ;; vi: ft=clojure
 
-(require '[clojure.set :as set])
-
-(require '[babashka.cli :as cli])
-(require '[babashka.fs :as fs])
-(require '[babashka.process :as proc])
-(require '[de.otto.nom.core :as nom])
+(ns nfnl.main
+  (:require [clojure.set :as set]
+            [babashka.cli :as cli]
+            [babashka.fs :as fs]
+            [babashka.process :as proc]))
 
 (def cli-opts
   {:help {:alias :h
@@ -26,7 +25,7 @@
 (defn compile-fennel-file
   "Compiles the given Fennel file into a Lua file. Can return an anomaly."
   [{:keys [src-path]}]
-  (nom/try-nom
+  (try
     (if src-path
       (let [{:keys [exit out err]}
             (proc/shell
@@ -36,14 +35,16 @@
              "fennel" "--compile" src-path)]
         (if (zero? exit)
           out
-          (nom/fail
-           :fault
-           {:exit exit
-            :err err
-            :message "Fennel process exited with a non-zero status code"})))
-      (nom/fail
-       :incorrect
-       {:message "src-path must be a string"}))))
+          {:cognitect.anomalies/category :cognitect.anomalies/fault
+           :cognitect.anomalies/message "Fennel process exited with a non-zero status code"
+           ::exit exit
+           ::err err}))
+      {:cognitect.anomalies/category :cognitect.anomalies/incorrect
+       :cognitect.anomalies/message "src-path must be a string"})
+    (catch Exception e
+      {:cognitect.anomalies/category :cognitect.anomalies/fault
+       :cognitect.anomalies/message "Uncaught exception"
+       ::exeption-map (Throwable->map e)})))
 
 (comment
   (compile-fennel-file {:src-path "init.fnl"}))
@@ -83,21 +84,22 @@
      (fn [fnl-path]
        (let [lua-path (str (fs/strip-ext fnl-path) ".lua")]
          (when (> (.toMillis (fs/last-modified-time fnl-path))
-                (.toMillis (fs/last-modified-time lua-path)))
+                  (.toMillis (fs/last-modified-time lua-path)))
            (println "[compile]" fnl-path)
            (let [lua (compile-fennel-file {:src-path fnl-path})]
-             (if (nom/abominable? lua)
-               (if (= :fault (nom/kind lua))
-                 (println (:err (nom/payload lua)))
-                 (println "[error]" lua))
+             (if-let [category (:cognitect.anomalies/category lua)]
+               (binding [*out* *err*]
+                 (if (= :cognitect.anomalies/fault category)
+                   (println (::err lua))
+                   (println "[error]" lua)))
                (when (not dry)
                  (spit lua-path lua)))))))
      fnl-paths)))
 
 (defn print-fennel-file-paths! [{:keys [root] :or {root "."}}]
   (run!
-    println
-    (map str (fs/glob root "**.fnl"))))
+   println
+   (map str (fs/glob root "**.fnl"))))
 
 (defn main
   "Parse the input args and work out what to do."

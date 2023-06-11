@@ -55,7 +55,7 @@
   (println)
   (println "To run whenever you change a file you can combine this tool with entr https://eradman.com/entrproject/")
   (println)
-  (println "Example: ./nfnl --files | entr ./nfnl --compile --prune")
+  (println "Example: ./nfnl --files | entr ./nfnl --compile")
   (println)
   (println (cli/format-opts {:spec cli-opts})))
 

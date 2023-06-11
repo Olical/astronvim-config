@@ -1,15 +1,9 @@
 {:colorscheme :astrodark
- :diagnostics {:underline true :virtual_text true}
- :lazy {:defaults {:lazy true}
-        :performance {:rtp {:disabled_plugins [:tohtml
-                                               :gzip
-                                               :matchit
-                                               :zipPlugin
-                                               :netrwPlugin
-                                               :tarPlugin]}}}
+ :diagnostics {:underline true
+               :virtual_text true}
+ :lazy {:defaults {:lazy false}}
  :lsp {:formatting {:disabled {}
-                    :format_on_save {:allow_filetypes {}
-                                     :enabled true
+                    :format_on_save {:enabled true
                                      :ignore_filetypes {}}
                     :timeout_ms 1000}
        :servers {}}
@@ -24,4 +18,3 @@
            :show_changelog true
            :skip_prompts false
            :version :latest}}
-

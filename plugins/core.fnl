@@ -1,5 +1,8 @@
-[{1 :goolord/alpha-nvim
-  :opts (fn [_ opts]
+(local uu (require :user.util))
+
+[(uu.tx
+  :goolord/alpha-nvim
+  {:opts (fn [_ opts]
           (set opts.section.header.val
                [" █████  ███████ ████████ ██████   ██████"
                 "██   ██ ██         ██    ██   ██ ██    ██"
@@ -12,5 +15,4 @@
                 "    ██ ██  ██ ██    ██ ██ ██ ████ ██"
                 "    ██  ██ ██  ██  ██  ██ ██  ██  ██"
                 "    ██   ████   ████   ██ ██      ██"])
-          opts)}]
-
+          opts)})]

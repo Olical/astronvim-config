@@ -1,0 +1,105 @@
+#!/usr/bin/env bb
+;; vi: ft=clojure
+
+(require '[clojure.java.io :as io])
+(require '[clojure.string :as str])
+(require '[clojure.set :as set])
+
+(require '[babashka.cli :as cli])
+(require '[babashka.fs :as fs])
+(require '[babashka.process :as proc])
+(require '[de.otto.nom.core :as nom])
+
+(def cli-opts
+  {:help {:alias :h
+          :desc "Prints this help"}
+   :compile {:alias :c
+             :desc "Compile all changed Fennel files into their Lua counterparts (\"changed\" means newer modified time than their Lua counterpart)"}
+   :dry {:alias :d
+         :desc "When true, it won't actually modify any files"}
+   :root {:alias :r
+          :desc "Root directory to perform all operations under"
+          :default "."}
+   :prune {:alias :p
+           :desc "Delete Lua files that lack a Fennel counterpart, prevents orphan Lua files from hanging around after a Fennel file deletion or rename"}})
+
+(defn compile-fennel-file
+  "Compiles the given Fennel file into a Lua file. Can return an anomaly."
+  [{:keys [src-path]}]
+  (nom/try-nom
+    (if src-path
+      (let [{:keys [exit out err]}
+            (proc/shell
+             {:out :string
+              :err :string
+              :continue true}
+             "fennel" "--compile" src-path)]
+        (if (zero? exit)
+          out
+          (nom/fail
+           :fault
+           {:exit exit
+            :err err
+            :message "Fennel process exited with a non-zero status code"})))
+      (nom/fail
+       :incorrect
+       {:message "src-path must be a string"}))))
+
+(comment
+  (compile-fennel-file {:src-path "init.fnl"}))
+
+(defn display-help! []
+  (println "Usage: nfnl [FLAG]\n")
+  (println "Compile changed Fennel files into Lua, intended for use with Neovim configuration.\n")
+  (println (cli/format-opts {:spec cli-opts})))
+
+(comment
+  (display-help!))
+
+(defn compile-changed-fennel-files!
+  "Find changed Fennel files that are newer than their Lua counterpart and compile them."
+  [{:keys [root prune dry] :or {root "."}}]
+  (let [fnl-paths (map str (fs/glob root "**.fnl"))
+        lua-paths (map str (fs/glob root "**.lua"))]
+
+    (when prune
+      (run!
+       (fn [lua-path]
+         (println "[delete]" lua-path)
+         (when (not dry)
+           (fs/delete lua-path)))
+       (map #(str % ".lua")
+            (set/difference
+             (set (map fs/strip-ext lua-paths))
+             (set (map fs/strip-ext fnl-paths))))))
+
+    (run!
+     (fn [fnl-path]
+       (let [lua-path (str (fs/strip-ext fnl-path) ".lua")]
+         (when (> (.toMillis (fs/last-modified-time fnl-path))
+                (.toMillis (fs/last-modified-time lua-path)))
+           (println "[compile]" fnl-path)
+           (let [lua (compile-fennel-file {:src-path fnl-path})]
+             (if (nom/abominable? lua)
+               (if (= :fault (nom/kind lua))
+                 (println (:err (nom/payload lua)))
+                 (println "[error]" lua))
+               (when (not dry)
+                 (spit lua-path lua)))))))
+     fnl-paths)))
+
+(defn main
+  "Parse the input args and work out what to do."
+  [args]
+  (let [opts (cli/parse-opts args cli-opts)]
+    (cond
+      (:help opts) (display-help!)
+      (:compile opts) (compile-changed-fennel-files! opts)
+      :else (display-help!))))
+
+(comment
+  ;; Intended to be invoked through your editor REPL during development.
+  (main ["--help"]))
+
+;; Default entrypoint of the script.
+(main *command-line-args*)

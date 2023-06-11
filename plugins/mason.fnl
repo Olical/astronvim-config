@@ -3,6 +3,8 @@
 (local lspconfig (uu.autoload :lspconfig))
 (local lspcfgs (uu.autoload :lspconfig.configs))
 
+;; TODO :opts should maybe be :config
+
 [(uu.tx
    :williamboman/mason-lspconfig.nvim
    {:opts (fn [_ opts]

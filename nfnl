@@ -1,8 +1,6 @@
 #!/usr/bin/env bb
 ;; vi: ft=clojure
 
-(require '[clojure.java.io :as io])
-(require '[clojure.string :as str])
 (require '[clojure.set :as set])
 
 (require '[babashka.cli :as cli])
@@ -17,6 +15,8 @@
              :desc "Compile all changed Fennel files into their Lua counterparts (\"changed\" means newer modified time than their Lua counterpart)"}
    :dry {:alias :d
          :desc "When true, it won't actually modify any files"}
+   :files {:alias :f
+           :desc "Prints the Fennel files it would operate on and exits, useful for piping into entr for \"compile on change\" support"}
    :root {:alias :r
           :desc "Root directory to perform all operations under"
           :default "."}
@@ -49,8 +49,14 @@
   (compile-fennel-file {:src-path "init.fnl"}))
 
 (defn display-help! []
-  (println "Usage: nfnl [FLAG]\n")
-  (println "Compile changed Fennel files into Lua, intended for use with Neovim configuration.\n")
+  (println "Usage: nfnl [FLAG]")
+  (println)
+  (println "Compile changed Fennel files into Lua, intended for use with Neovim configuration.")
+  (println)
+  (println "To run whenever you change a file you can combine this tool with entr https://eradman.com/entrproject/")
+  (println)
+  (println "Example: ./nfnl --files | entr ./nfnl --compile --prune")
+  (println)
   (println (cli/format-opts {:spec cli-opts})))
 
 (comment
@@ -88,12 +94,18 @@
                  (spit lua-path lua)))))))
      fnl-paths)))
 
+(defn print-fennel-file-paths! [{:keys [root] :or {root "."}}]
+  (run!
+    println
+    (map str (fs/glob root "**.fnl"))))
+
 (defn main
   "Parse the input args and work out what to do."
   [args]
   (let [opts (cli/parse-opts args cli-opts)]
     (cond
       (:help opts) (display-help!)
+      (:files opts) (print-fennel-file-paths! opts)
       (:compile opts) (compile-changed-fennel-files! opts)
       :else (display-help!))))
 

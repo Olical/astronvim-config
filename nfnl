@@ -68,6 +68,14 @@
 (defn notify! [summary msg]
   (proc/shell "notify-send" summary msg))
 
+(defn last-modified-time-ms-safe
+  "Will ALWAYS return a number. If there's an error it'll return a negative number."
+  [path]
+  (try
+    (.toMillis (fs/last-modified-time path))
+    (catch Exception _e
+      -1)))
+
 (defn compile-changed-fennel-files!
   "Find changed Fennel files that are newer than their Lua counterpart and compile them."
   [{:keys [root prune dry notify] :or {root "."}}]
@@ -88,8 +96,8 @@
     (run!
      (fn [fnl-path]
        (let [lua-path (str (fs/strip-ext fnl-path) ".lua")]
-         (when (> (.toMillis (fs/last-modified-time fnl-path))
-                  (.toMillis (fs/last-modified-time lua-path)))
+         (when (> (last-modified-time-ms-safe fnl-path)
+                  (last-modified-time-ms-safe lua-path))
            (println "[compile]" fnl-path)
            (let [lua (compile-fennel-file {:src-path fnl-path})]
              (if-let [category (:cognitect.anomalies/category lua)]

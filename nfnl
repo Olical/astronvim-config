@@ -2,7 +2,8 @@
 ;; vi: ft=clojure
 
 (ns nfnl.main
-  (:require [clojure.set :as set]
+  (:require [clojure.string :as str]
+            [clojure.set :as set]
             [babashka.cli :as cli]
             [babashka.fs :as fs]
             [babashka.process :as proc]))
@@ -22,7 +23,7 @@
           :desc "Root directory to perform all operations under"
           :default "."}
    :prune {:alias :p
-           :desc "Delete Lua files that lack a Fennel counterpart, prevents orphan Lua files from hanging around after a Fennel file deletion or rename"}})
+           :desc "Delete Lua files that lack a Fennel counterpart, prevents orphan Lua files from hanging around after a Fennel file deletion or rename, takes a list of globs that should not be included in the pruning (like `vendor/**.lua,my-cool.lua`)"}})
 
 (defn compile-fennel-file
   "Compiles the given Fennel file into a Lua file. Can return an anomaly."
@@ -76,11 +77,15 @@
     (catch Exception _e
       -1)))
 
+(defn fnl->lua-ext [fnl-path]
+  (str (fs/strip-ext fnl-path) ".lua"))
+
 (defn compile-changed-fennel-files!
   "Find changed Fennel files that are newer than their Lua counterpart and compile them."
   [{:keys [root prune dry notify] :or {root "."}}]
-  (let [fnl-paths (map str (fs/glob root "**.fnl"))
-        lua-paths (map str (fs/glob root "**.lua"))]
+  (let [glob #(map str (fs/glob root %))
+        fnl-paths (glob "**.fnl")
+        lua-paths (glob "**.lua")]
 
     (when prune
       (run!
@@ -88,14 +93,14 @@
          (println "[delete]" lua-path)
          (when (not dry)
            (fs/delete lua-path)))
-       (map #(str % ".lua")
-            (set/difference
-             (set (map fs/strip-ext lua-paths))
-             (set (map fs/strip-ext fnl-paths))))))
+       (set/difference
+        (set lua-paths)
+        (set (map fnl->lua-ext fnl-paths))
+        (set (mapcat glob prune)))))
 
     (run!
      (fn [fnl-path]
-       (let [lua-path (str (fs/strip-ext fnl-path) ".lua")]
+       (let [lua-path (fnl->lua-ext fnl-path)]
          (when (> (last-modified-time-ms-safe fnl-path)
                   (last-modified-time-ms-safe lua-path))
            (println "[compile]" fnl-path)
@@ -120,7 +125,13 @@
 (defn main
   "Parse the input args and work out what to do."
   [args]
-  (let [opts (cli/parse-opts args cli-opts)]
+  (let [opts (update (cli/parse-opts args cli-opts) :prune
+                     (fn [prune]
+                       (cond
+                         (string? prune) (str/split prune #",")
+                         (true? prune) []
+                         (false? prune) nil
+                         :else prune)))]
     (cond
       (:help opts) (display-help!)
       (:files opts) (print-fennel-file-paths! opts)

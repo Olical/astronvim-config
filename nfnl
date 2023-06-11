@@ -14,6 +14,8 @@
              :desc "Compile all changed Fennel files into their Lua counterparts (\"changed\" means newer modified time than their Lua counterpart)"}
    :dry {:alias :d
          :desc "When true, it won't actually modify any files"}
+   :notify {:alias :n
+            :desc "Use notify-send to display errors alongside printing to stderr"}
    :files {:alias :f
            :desc "Prints the Fennel files it would operate on and exits, useful for piping into entr for \"compile on change\" support"}
    :root {:alias :r
@@ -63,9 +65,12 @@
 (comment
   (display-help!))
 
+(defn notify! [summary msg]
+  (proc/shell "notify-send" summary msg))
+
 (defn compile-changed-fennel-files!
   "Find changed Fennel files that are newer than their Lua counterpart and compile them."
-  [{:keys [root prune dry] :or {root "."}}]
+  [{:keys [root prune dry notify] :or {root "."}}]
   (let [fnl-paths (map str (fs/glob root "**.fnl"))
         lua-paths (map str (fs/glob root "**.lua"))]
 
@@ -90,7 +95,10 @@
              (if-let [category (:cognitect.anomalies/category lua)]
                (binding [*out* *err*]
                  (if (= :cognitect.anomalies/fault category)
-                   (println (::err lua))
+                   (do
+                     (println (::err lua))
+                     (when notify
+                       (notify! (str fnl-path " compilation failed") (::err lua))))
                    (println "[error]" lua)))
                (when (not dry)
                  (spit lua-path lua)))))))

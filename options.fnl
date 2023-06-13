@@ -7,7 +7,11 @@
      :icons_enabled true
      :ui_notifications_enabled true
      :resession_enabled true
-     }
+
+     ;; https://neovide.dev/configuration.html
+     :neovide_hide_mouse_when_typing true
+     :neovide_cursor_animation_length 0.05
+     :neovide_cursor_trail_size 0.5}
  :opt {:signcolumn :auto
        :number false
        :relativenumber false

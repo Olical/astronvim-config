@@ -1,6 +1,7 @@
 (local uu (require :user.util))
 
-[(uu.tx :Olical/aniseed)
+[
+ (uu.tx :Olical/aniseed)
  (uu.tx :Olical/nvim-local-fennel)
  (uu.tx :PeterRincker/vim-argumentative)
  (uu.tx :bakpakin/fennel.vim)
@@ -10,6 +11,7 @@
  (uu.tx :hylang/vim-hy)
  (uu.tx :janet-lang/janet.vim)
  (uu.tx :lambdalisue/suda.vim)
+ (uu.tx :lewis6991/impatient.nvim {:config (fn [] (require :impatient))})
  (uu.tx :radenling/vim-dispatch-neovim)
  (uu.tx :tpope/vim-abolish)
  (uu.tx :tpope/vim-commentary)
@@ -21,4 +23,5 @@
  (uu.tx :tpope/vim-surround)
  (uu.tx :tpope/vim-unimpaired)
  (uu.tx :tpope/vim-vinegar)
- (uu.tx :wlangstroth/vim-racket)]
+ (uu.tx :wlangstroth/vim-racket)
+]

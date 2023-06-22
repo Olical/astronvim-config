@@ -19,4 +19,6 @@
        :wrap true
        :sessionoptions "blank,curdir,folds,help,tabpages,winsize"
        :clipboard ""
+       :list true
+       :listchars "tab:▷ ,trail:·,extends:◣,precedes:◢,nbsp:○"
        :guifont "FiraCode Nerd Font:h10"}}

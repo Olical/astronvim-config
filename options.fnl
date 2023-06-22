@@ -17,4 +17,6 @@
        :relativenumber false
        :spell true
        :wrap true
+       :sessionoptions "blank,curdir,folds,help,tabpages,winsize"
+       :clipboard ""
        :guifont "FiraCode Nerd Font:h10"}}

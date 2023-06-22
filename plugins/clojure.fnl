@@ -15,14 +15,11 @@
  (uu.tx
    :nvim-treesitter/nvim-treesitter
    {:opts (fn [_ opts]
-            (when (not= opts.ensure_installed :all)
-              (set opts.ensure_installed (utils.list_insert_unique opts.ensure_installed :clojure))))})
+            (set opts.ensure_installed (utils.list_insert_unique opts.ensure_installed :clojure)))})
 
  (uu.tx
    :Olical/conjure
-   {:ft [:clojure]
-    :lazy true
-    :init (fn []
+   {:init (fn []
             (set vim.g.conjure#eval#result_register "*")
             (set vim.g.conjure#log#botright true)
             (set vim.g.conjure#mapping#doc_word "gk")
@@ -46,5 +43,4 @@
                :pattern [:clojure]}))})
 
  (uu.tx :Olical/AnsiEsc)
- (uu.tx :PaterJason/cmp-conjure {:ft [:clojure :fennel]})
- ]  
+ (uu.tx :PaterJason/cmp-conjure)]

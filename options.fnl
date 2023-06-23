@@ -21,4 +21,6 @@
        :clipboard ""
        :list true
        :listchars "tab:▷ ,trail:·,extends:◣,precedes:◢,nbsp:○"
+       :shortmess "atOIc"
+       :cmdheight 1
        :guifont "FiraCode Nerd Font:h10"}}

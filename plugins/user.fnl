@@ -11,7 +11,6 @@
  (uu.tx :hylang/vim-hy)
  (uu.tx :janet-lang/janet.vim)
  (uu.tx :lambdalisue/suda.vim)
- (uu.tx :lewis6991/impatient.nvim {:config (fn [] (require :impatient))})
  (uu.tx :radenling/vim-dispatch-neovim)
  (uu.tx :tpope/vim-abolish)
  (uu.tx :tpope/vim-commentary)

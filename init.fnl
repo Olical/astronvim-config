@@ -1,3 +1,5 @@
+(vim.loader.enable)
+
 {:colorscheme :astrodark
  :diagnostics {:underline true
                :virtual_text true}
